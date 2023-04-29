@@ -34,7 +34,7 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     # manually-added app
     "personal_dir",
-
+    # 'datepicker',
 
     # auto-generated
     "django.contrib.admin",
