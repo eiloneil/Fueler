@@ -1,0 +1,33 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <meta charset="UTF-8">
+        <!-- styles -->
+    <link rel="stylesheet" type="text/css" href="{% static 'style.css' %}">
+    <title>Add Fuel Row</title>
+
+</head>
+
+<body>
+    <!-- go back Button -->
+    <a href="{% url 'home' %}">
+        <button class="back_btn">Go to Home Page</button>
+    </a>
+    <div class="container">
+        <h1>Enter some text:</h1>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form }}
+        <button type="submit">Submit</button>
+    </form>
+    {% if date %}
+    <p>You entered data for: {{ date }}</p>
+    {% endif %}
+</body>
+
+</html>
