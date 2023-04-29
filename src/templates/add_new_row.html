@@ -31,19 +31,20 @@
         <button type="submit">{{ btn_txt }}</button>
     </form>
 
-    <!-- If successful: -->
+    <!-- If ADDED/DELETED row successfully -->
     {% if is_submitted_successfully %}
     <p>You entered data for: {{ is_submitted_successfully }}</p>
     {% endif %}
 
-    <!-- If unsuccessful: -->
+    <!-- If ADDED/DELETED row unsuccessfully -->
     {% if messages %}
     <div class="alert alert-danger" role="alert">
         {% for message in messages %}
-            <span class="message">{{ message }}</span>
+        <span class="message">{{ message }}</span>
         {% endfor %}
     </div>
-{% endif %}
+    {% endif %}
+
 
 
 

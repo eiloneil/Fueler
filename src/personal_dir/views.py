@@ -1,12 +1,13 @@
 from django.shortcuts import render
 from django.http import HttpResponse
+from django.contrib import messages
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import db
 from .forms import TextInputForm, INPUTS, DateRangeForm
 import time
 from datetime import datetime
-from .fuel_utils import calc_fuel_metrics, get_db_from_firebase, delete_rows_within_range, push_to_db
+from .fuel_utils import calc_fuel_metrics, get_db_from_firebase, delete_rows_within_range, push_to_db, FIREBASE_CONNECTION
 
 TEST = True
 # TEST = False
@@ -73,7 +74,14 @@ def btn_delete_row(request):
         if form.is_valid():
             start_date = form.cleaned_data['start_date']
             end_date = form.cleaned_data['end_date']
-            delete_rows_within_range(start_date, end_date, db_name='fuel_raw')
+            deleted_dates = delete_rows_within_range(start_date, end_date, db_name='fuel_raw')
+            num_deleted_dates = len(deleted_dates)
+            if num_deleted_dates > 0:
+                messages.error(request, f'Successfully Deleted {num_deleted_dates} date{"s" if num_deleted_dates>1 else ""}: {", ".join(deleted_dates)}')
+            else:
+                messages.error(request, 'No Dates were Deleted')
+
+
     else:
         form = DateRangeForm(initial={'start_date': today, 'end_date': today})
     context = {

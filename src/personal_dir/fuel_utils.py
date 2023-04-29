@@ -6,27 +6,18 @@ from firebase_admin import credentials
 from firebase_admin import db
 from .forms import TextInputForm, INPUTS
 import time
-from datetime import datetime, date
+from datetime import datetime, date, time
 
+# Create a connection to FireBase DB
 
-def connect_to_firebase():
-    try:
-        # Access Firebase Realtime DB
-        cred = credentials.Certificate(
-            '/Users/eiloneil/Desktop/Python/Fueler/fuelerEnv/src/config/efueler-384916-firebase-adminsdk.json')
-        firebase_admin.initialize_app(cred, {
-            'databaseURL': 'https://efueler-384916-default-rtdb.firebaseio.com/'
-        })
-    except Exception as e:
-        if isinstance(e, ValueError):
-            print("Already logged to FB DB. Skipping reconnection")
-            pass
-        else:
-            raise e
+cred = credentials.Certificate(
+    '/Users/eiloneil/Desktop/Python/Fueler/fuelerEnv/src/config/efueler-384916-firebase-adminsdk.json')
+FIREBASE_CONNECTION = firebase_admin.initialize_app(cred, {
+    'databaseURL': 'https://efueler-384916-default-rtdb.firebaseio.com/'
+})
 
 
 def get_db_from_firebase(db_name='fuel_raw'):
-    connect_to_firebase()
 
     # Get a reference to a specific location in the database
     ref = db.reference(f'/{db_name}')
@@ -77,33 +68,34 @@ def calc_fuel_metrics(input_data, req):
     data = format_input_data_to_firebase(input_data)
     return data
 
+
 def format_input_data_to_firebase(data):
     stg_data = {
-        'amount':data['amount'],
-        'cost_per_day':data['cost_per_day'],
-        'diff':data['diff_kms'],
-        'diff_days':data['diff_days'],
-        'kms_after':data['kms'],
-        'kms_before':data['prev_kms'],
-        'kms_per_l':data['kms_per_l'],
-        'last_date':data['prev_date'],
-        'place':data['place'],
-        'price_per_l':data['price_per_l'],
-        'price_total':data['cost'],
+        'amount': data['amount'],
+        'cost_per_day': data['cost_per_day'],
+        'diff': data['diff_kms'],
+        'diff_days': data['diff_days'],
+        'kms_after': data['kms'],
+        'kms_before': data['prev_kms'],
+        'kms_per_l': data['kms_per_l'],
+        'last_date': data['prev_date'],
+        'place': data['place'],
+        'price_per_l': data['price_per_l'],
+        'price_total': data['cost'],
     }
 
-    final_data = {data['date'] : stg_data}
+    final_data = {data['date']: stg_data}
     return final_data
 
 
 def push_to_db(data, db_name='fuel_raw'):
-    connect_to_firebase()
 
     # Get a reference to a specific location in the database
     ref = db.reference(f'/{db_name}')
 
     # Push the data to the database
     ref.update(data)
+
 
 def get_all_values_from_column(col, db_name='fuel_raw', is_ds=False):
     # get raw data
@@ -112,17 +104,35 @@ def get_all_values_from_column(col, db_name='fuel_raw', is_ds=False):
     if is_ds:
         return data.keys()
     else:
-        try:    #  Safety measure, if a user calls for a ds (or any partition column)
-                #  and forgets to tick the `is_ds` flag
+        # Safety measure, if a user calls for a ds (or any partition column)
+        try:
+            #  and forgets to tick the `is_ds` flag
             return [subset[col] for subset in data.values()]
         except:
             return data.keys()
 
 
-
 def delete_rows_within_range(s, e, db_name='fuel_raw'):
+
+    start_date = datetime.combine(s, time(0,0))
+    end_date = datetime.combine(e, time(0,0))
+
     # get raw data
     data = get_db_from_firebase(db_name)
 
     # get all dates
-    all_dates = data.keys()
+    all_dates = list(get_all_values_from_column('Date'))
+
+    dates_in_range = list(filter(lambda x: start_date <= datetime.strptime(
+        x, '%Y-%m-%d') <= end_date, all_dates))
+
+    # Delete each date partition that's in range
+    for d in dates_in_range:
+        delete_row_by_partition(d, db_name)
+
+    return dates_in_range
+
+
+def delete_row_by_partition(partition, db_name='fuel_raw'):
+    ref = db.reference(f'/{db_name}/{partition}')
+    ref.delete()
