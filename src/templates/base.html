@@ -4,6 +4,8 @@
 
 
   <title>Fuel Tracker</title>
+
+
   <style>
     body {
       background-color: lightgreen;
@@ -24,6 +26,7 @@
       font-size: 36px;
       color: #333;
       margin-top: 0;
+      text-align: center;
     }
 
     p {
@@ -59,7 +62,22 @@
     <a href="/fuel/view" class="btn">View Fuel Entries</a>
   </div>
   <br>
-  <!-- <a href="/plots" class="btn">Show plots</a> -->
+
+
+
+    <h1>Current Status</h1>
+    <div id="plot" class="color: transparent">
+
+    <!-- Include the Plotly JavaScript libraries -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+    <!-- Render the plot using the plot_div variable passed from the view -->
+    <script>
+        var plot_div_daily = '{{ plot_div.daily|safe }}'
+        var plot_div_rolling = '{{ plot_div.rolling|safe }}'
+    </script>
+</div>
+
 
 </body>
 </html>

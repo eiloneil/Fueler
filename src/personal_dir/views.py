@@ -10,6 +10,7 @@ from datetime import datetime
 from .fuel_utils import calc_fuel_metrics, get_db_from_firebase, delete_rows_within_range, push_to_db, FIREBASE_CONNECTION
 import pandas as pd
 import plotly.graph_objs as go
+from plotly.subplots import make_subplots
 from django.shortcuts import render
 
 
@@ -29,22 +30,69 @@ if TEST:
 
 def home_page_view(req):
     print('Initiate Home Page')
-    return render(req, 'base.html', {})
+
+    # Get Fuel Raw Data
+    data = get_db_from_firebase('/fuel_raw')
+    df = pd.DataFrame.from_dict(data, orient='index')
+
+    daily_plot_div = get_daily_plots(df)
+    rolling_plot_div = get_rolling_plots(df)
 
 
-def show_plots(request):
+    return render(req, 'base.html', {'plot_div': {"daily": daily_plot_div, "rolling":rolling_plot_div}})
 
-    # Generate some sample data
-    df = pd.DataFrame({'x': [1, 2, 3, 4], 'y': [10, 20, 30, 40]})
+
+def get_daily_plots(df):
 
     # Generate the plot using Plotly
-    plot_data = [go.Scatter(x=df['x'], y=df['y'])]
-    plot_layout = go.Layout(title='My Plot')
-    plot_fig = go.Figure(data=plot_data, layout=plot_layout)
+    plot_layout = go.Layout(title='Daily Stats')
+    fig = make_subplots(rows=1, cols=2)
+
+
+    fig.add_trace(go.Scatter(x=df.index, y=df['cost_per_day'], name='Price Per Day'),
+                row=1, col=1)
+
+    fig.add_trace(go.Scatter(x=df.index, y=df['kms_per_l'], name='Kms per Liter'),
+                row=1, col=2)
+
+    # Update layout to display both charts in the same height
+    # Add titles to the subplots
+    fig.update_layout(title_text='Daily Stats', title_font_size=24,
+                  annotations=[dict(text='Price Per Day', x=0.2, y=1.1,
+                                    font_size=18, showarrow=False, xref='paper', yref='paper', align='center'),
+                               dict(text='Kms per Liter', x=0.8, y=1.1,
+                                    font_size=18, showarrow=False, xref='paper', yref='paper', align='center')])
 
     # Render the plot in a template
-    plot_div = plot_fig.to_html(full_html=False)
-    return render(request, 'plots.html', {'plot_div': plot_div})
+    plot_div = fig.to_html(full_html=False)
+    return plot_div
+
+
+def get_rolling_plots(df):
+
+    # Generate the plot using Plotly
+    plot_layout = go.Layout(title='Rolling Stats')
+    fig = make_subplots(rows=1, cols=2)
+
+
+    fig.add_trace(go.Scatter(x=df.index, y=df['rolling_cost_per_day'], name='Rolling Cost/Day'),
+                row=1, col=1)
+
+    fig.add_trace(go.Scatter(x=df.index, y=df['rolling_kms_per_l'], name='Rolling Kms/Liter'),
+                row=1, col=2)
+
+    # Update layout to display both charts in the same height
+    # Add titles to the subplots
+    fig.update_layout(title_text='Rolling Stats', title_font_size=24,
+                  annotations=[dict(text='Rolling Cost/Day', x=0.2, y=1.1,
+                                    font_size=18, showarrow=False, xref='paper', yref='paper', align='center'),
+                               dict(text='Rolling Kms/Liter', x=0.8, y=1.1,
+                                    font_size=18, showarrow=False, xref='paper', yref='paper', align='center')])
+
+
+    # Render the plot in a template
+    plot_div = fig.to_html(full_html=False)
+    return plot_div
 
 def btn_add_row(request):
     print('btn_add_row CLICKED')
