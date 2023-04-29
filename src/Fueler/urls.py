@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from personal_dir.views import (home_page_view, btn_add_row,btn_show_raw_data, btn_add_row )
+from personal_dir.views import (home_page_view, btn_add_row,btn_show_raw_data, btn_add_row, btn_delete_row )
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -25,6 +25,7 @@ urlpatterns = [
     path('', home_page_view, name='home'),
     path('fuel/view/', btn_show_raw_data,),
     path('add_row/', btn_add_row, name='add_row'),
+    path('delete_row/', btn_delete_row, name='delete_row'),
 ]
 
 

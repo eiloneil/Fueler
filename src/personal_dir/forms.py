@@ -17,3 +17,10 @@ class TextInputForm(forms.Form):
         text_boxes[i] = forms.CharField(**kwargs)
 
     date, place, amount, cost, kms = text_boxes.values()
+
+
+
+
+class DateRangeForm(forms.Form):
+    start_date = forms.DateField(label='Start Date')
+    end_date = forms.DateField(label='End Date')

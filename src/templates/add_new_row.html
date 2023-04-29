@@ -1,33 +1,52 @@
-{% load static %}
 
 <!DOCTYPE html>
 <html>
-
     <head>
         <meta charset="UTF-8">
         <!-- styles -->
-    <link rel="stylesheet" type="text/css" href="{% static 'style.css' %}">
-    <title>Add Fuel Row</title>
+        {% load static %}
+        <link rel="stylesheet" type="text/css" href="{% static 'style.css' %}">
+        <title>Add Fuel Row</title>
 
-</head>
+    </head>
 
-<body>
-    <!-- go back Button -->
-    <a href="{% url 'home' %}">
-        <button class="back_btn">Go to Home Page</button>
-    </a>
+    <body>
+        <!-- go back Button -->
+        <a href="{% url 'home' %}">
+            <button class="back_btn">Go to Home Page</button>
+        </a>
+        <br>
+        <!-- Delete Row Buton -->
+        <a href="{% url switch_action.url %}">
+            <button class="back_btn"> {{ switch_action.btn_name }} </button>
+        </a>
+
     <div class="container">
-        <h1>Enter some text:</h1>
+        <h1>Enter fuel details:</h1>
     </div>
 
     <form method="post">
         {% csrf_token %}
         {{ form }}
-        <button type="submit">Submit</button>
+        <button type="submit">{{ btn_txt }}</button>
     </form>
-    {% if date %}
-    <p>You entered data for: {{ date }}</p>
+
+    <!-- If successful: -->
+    {% if is_submitted_successfully %}
+    <p>You entered data for: {{ is_submitted_successfully }}</p>
     {% endif %}
+
+    <!-- If unsuccessful: -->
+    {% if messages %}
+    <div class="alert alert-danger" role="alert">
+        {% for message in messages %}
+            <span class="message">{{ message }}</span>
+        {% endfor %}
+    </div>
+{% endif %}
+
+
+
 </body>
 
 </html>

@@ -1,0 +1,37 @@
+{% extends 'add_new_row.html' %}
+
+{% block content %}
+  <form method="post" action="">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <div id="date-slider"></div>
+    <button type="submit">Submit</button>
+  </form>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ion-rangeslider/2.3.1/js/ion.rangeSlider.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ion-rangeslider/2.3.1/css/ion.rangeSlider.min.css" />
+
+  <script>
+    $(document).ready(function() {
+      $("#date-slider").ionRangeSlider({
+        type: "double",
+        grid: true,
+        min: new Date(2000, 0, 1).getTime(),
+        max: new Date().getTime(),
+        from: new Date().setDate(new Date().getDate() - 7),
+        to: new Date().getTime(),
+        prettify: function(num) {
+          return moment(num).format("MMM Do YYYY");
+        },
+        onStart: function(data) {
+          $("#id_start_date").val(moment(data.from).format("YYYY-MM-DD"));
+          $("#id_end_date").val(moment(data.to).format("YYYY-MM-DD"));
+        },
+        onChange: function(data) {
+          $("#id_start_date").val(moment(data.from).format("YYYY-MM-DD"));
+          $("#id_end_date").val(moment(data.to).format("YYYY-MM-DD"));
+        }
+      });
+    });
+  </script>
+{% endblock %}

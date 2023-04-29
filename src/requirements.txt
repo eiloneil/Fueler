@@ -6,6 +6,7 @@ cffi==1.15.1
 charset-normalizer==3.1.0
 cryptography==40.0.2
 Django==4.2
+django-bootstrap-datepicker-plus==5.0.3
 django-referrer-policy==1.0
 firebase-admin==6.1.0
 google-api-core==2.11.0
@@ -28,11 +29,13 @@ protobuf==4.22.3
 pyasn1==0.5.0
 pyasn1-modules==0.3.0
 pycparser==2.21
+pydantic==1.10.7
 PyJWT==2.6.0
 pyparsing==3.0.9
 requests==2.29.0
 rsa==4.9
 six==1.16.0
 sqlparse==0.4.4
+typing_extensions==4.5.0
 uritemplate==4.1.1
 urllib3==1.26.15
