@@ -47,6 +47,11 @@
         </tr>
       </thead>
       <tbody>
+        <!-- go back Button -->
+        <a href="{% url 'home' %}">
+          <button class="back_btn">Go to Home Page</button>
+        </a>
+
         {% for ds, row in data.items %}
           <tr>
             <td>{{ ds }}</td>
