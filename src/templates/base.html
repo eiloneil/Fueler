@@ -15,7 +15,7 @@
     .container {
       max-width: 800px;
       margin: 0 auto;
-      padding: 20px;
+      padding: 15px;
       text-align: center;
       border-radius: 10px;
       background-color: #fff;
@@ -62,19 +62,23 @@
     <a href="/fuel/view" class="btn">View Fuel Entries</a>
   </div>
   <br>
+  <br>
 
 
 
-    <h1>Current Status</h1>
-    <div id="plot" class="color: transparent">
+  <h1 class="container">Current Status</h1>
+  <br>
+  <div id="plot" style="color: transparent;">
+
 
     <!-- Include the Plotly JavaScript libraries -->
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 
     <!-- Render the plot using the plot_div variable passed from the view -->
-    <script>
-        var plot_div_daily = '{{ plot_div.daily|safe }}'
-        var plot_div_rolling = '{{ plot_div.rolling|safe }}'
+    <script type="text/javascript">
+
+var plot_div_daily = '{{ plot_div.daily|safe }}'
+var plot_div_rolling = '{{ plot_div.rolling|safe }}'
     </script>
 </div>
 
