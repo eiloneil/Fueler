@@ -8,6 +8,10 @@ from .forms import TextInputForm, INPUTS, DateRangeForm
 import time
 from datetime import datetime
 from .fuel_utils import calc_fuel_metrics, get_db_from_firebase, delete_rows_within_range, push_to_db, FIREBASE_CONNECTION
+import pandas as pd
+import plotly.graph_objs as go
+from django.shortcuts import render
+
 
 TEST = True
 # TEST = False
@@ -27,6 +31,20 @@ def home_page_view(req):
     print('Initiate Home Page')
     return render(req, 'base.html', {})
 
+
+def show_plots(request):
+
+    # Generate some sample data
+    df = pd.DataFrame({'x': [1, 2, 3, 4], 'y': [10, 20, 30, 40]})
+
+    # Generate the plot using Plotly
+    plot_data = [go.Scatter(x=df['x'], y=df['y'])]
+    plot_layout = go.Layout(title='My Plot')
+    plot_fig = go.Figure(data=plot_data, layout=plot_layout)
+
+    # Render the plot in a template
+    plot_div = plot_fig.to_html(full_html=False)
+    return render(request, 'plots.html', {'plot_div': plot_div})
 
 def btn_add_row(request):
     print('btn_add_row CLICKED')

@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>My Plot</h1>
+    <div id="plot"></div>
+
+    <!-- Include the Plotly JavaScript libraries -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+    <!-- Render the plot using the plot_div variable passed from the view -->
+    <script>
+        var plot_div = "{{ plot_div|safe }}";
+        document.getElementById('plot').innerHTML = plot_div;
+    </script>
+{% endblock %}
