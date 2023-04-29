@@ -7,6 +7,9 @@ from firebase_admin import db
 from .forms import TextInputForm, INPUTS
 import time
 from datetime import datetime, date, time
+import pandas as pd
+import plotly.graph_objs as go
+from plotly.subplots import make_subplots
 
 # Create a connection to FireBase DB
 
@@ -158,3 +161,33 @@ def delete_rows_within_range(s, e, db_name='fuel_raw'):
 def delete_row_by_partition(partition, db_name='fuel_raw'):
     ref = db.reference(f'/{db_name}/{partition}')
     ref.delete()
+
+
+
+def get_plots(df, attr_dict):
+
+    ttl = attr_dict['title']
+    subplots = attr_dict['subplots']
+    num_subplots = len(list(subplots))
+
+    # Generate the plot using Plotly
+    plot_layout = go.Layout(title=ttl)
+
+    fig = make_subplots(rows=1, cols=num_subplots)
+
+    annots = []
+    for i, sp in enumerate(subplots.keys()):
+        fig.add_trace(go.Scatter(x=df.index, y=df[sp], name=subplots[sp]),
+                      row=1, col=i+1)
+        annot = dict(text=subplots[sp], x=((i+1)/(num_subplots+1)), y=1.1,
+                     font_size=18, showarrow=False, xref='paper', yref='paper', align='center')
+        annots.append(annot)
+
+    # Update layout to display both charts in the same height
+    # Add titles to the subplots
+    fig.update_layout(title_text=ttl, title_font_size=24,
+                      annotations=annots)
+
+    # Render the plot in a template
+    plot_div = fig.to_html(full_html=False)
+    return plot_div

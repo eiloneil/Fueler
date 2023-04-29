@@ -7,7 +7,7 @@ from firebase_admin import db
 from .forms import TextInputForm, INPUTS, DateRangeForm
 import time
 from datetime import datetime
-from .fuel_utils import calc_fuel_metrics, get_db_from_firebase, delete_rows_within_range, push_to_db, FIREBASE_CONNECTION
+from .fuel_utils import (calc_fuel_metrics, get_db_from_firebase, delete_rows_within_range, push_to_db, FIREBASE_CONNECTION, get_plots)
 import pandas as pd
 import plotly.graph_objs as go
 from plotly.subplots import make_subplots
@@ -35,64 +35,28 @@ def home_page_view(req):
     data = get_db_from_firebase('/fuel_raw')
     df = pd.DataFrame.from_dict(data, orient='index')
 
-    daily_plot_div = get_daily_plots(df)
-    rolling_plot_div = get_rolling_plots(df)
+    # daily_plot_div = get_daily_plots(df)
+    # rolling_plot_div = get_rolling_plots(df)
+
+    subplot_attr = {
+        "daily": {"title": "Daily Stats",
+                  "subplots": {
+                      'cost_per_day': 'Price Per Day',
+                      'kms_per_l': 'Kms per Liter',
+                  }
+                  },
+        "rolling": {"title": "Rolling Stats",
+                    "subplots": {
+                        'rolling_cost_per_day': 'Rolling Cost/Day',
+                        'rolling_kms_per_l': 'Rolling Kms/Liter',
+                    }
+                    }
+    }
+    plot_divs = {ttl: get_plots(df, attr_dict) for ttl, attr_dict in subplot_attr.items()}
+
+    return render(req, 'base.html', {'plot_div': plot_divs})
 
 
-    return render(req, 'base.html', {'plot_div': {"daily": daily_plot_div, "rolling":rolling_plot_div}})
-
-
-def get_daily_plots(df):
-
-    # Generate the plot using Plotly
-    plot_layout = go.Layout(title='Daily Stats')
-    fig = make_subplots(rows=1, cols=2)
-
-
-    fig.add_trace(go.Scatter(x=df.index, y=df['cost_per_day'], name='Price Per Day'),
-                row=1, col=1)
-
-    fig.add_trace(go.Scatter(x=df.index, y=df['kms_per_l'], name='Kms per Liter'),
-                row=1, col=2)
-
-    # Update layout to display both charts in the same height
-    # Add titles to the subplots
-    fig.update_layout(title_text='Daily Stats', title_font_size=24,
-                  annotations=[dict(text='Price Per Day', x=0.2, y=1.1,
-                                    font_size=18, showarrow=False, xref='paper', yref='paper', align='center'),
-                               dict(text='Kms per Liter', x=0.8, y=1.1,
-                                    font_size=18, showarrow=False, xref='paper', yref='paper', align='center')])
-
-    # Render the plot in a template
-    plot_div = fig.to_html(full_html=False)
-    return plot_div
-
-
-def get_rolling_plots(df):
-
-    # Generate the plot using Plotly
-    plot_layout = go.Layout(title='Rolling Stats')
-    fig = make_subplots(rows=1, cols=2)
-
-
-    fig.add_trace(go.Scatter(x=df.index, y=df['rolling_cost_per_day'], name='Rolling Cost/Day'),
-                row=1, col=1)
-
-    fig.add_trace(go.Scatter(x=df.index, y=df['rolling_kms_per_l'], name='Rolling Kms/Liter'),
-                row=1, col=2)
-
-    # Update layout to display both charts in the same height
-    # Add titles to the subplots
-    fig.update_layout(title_text='Rolling Stats', title_font_size=24,
-                  annotations=[dict(text='Rolling Cost/Day', x=0.2, y=1.1,
-                                    font_size=18, showarrow=False, xref='paper', yref='paper', align='center'),
-                               dict(text='Rolling Kms/Liter', x=0.8, y=1.1,
-                                    font_size=18, showarrow=False, xref='paper', yref='paper', align='center')])
-
-
-    # Render the plot in a template
-    plot_div = fig.to_html(full_html=False)
-    return plot_div
 
 def btn_add_row(request):
     print('btn_add_row CLICKED')
@@ -110,7 +74,8 @@ def btn_add_row(request):
                 pass
             else:
                 push_to_db(new_data, 'fuel_raw')
-                btn_context.update({'is_submitted_successfully':input_data['date']})
+                btn_context.update(
+                    {'is_submitted_successfully': input_data['date']})
     else:
 
         form = TextInputForm(initial=init_text)
@@ -140,13 +105,14 @@ def btn_delete_row(request):
         if form.is_valid():
             start_date = form.cleaned_data['start_date']
             end_date = form.cleaned_data['end_date']
-            deleted_dates = delete_rows_within_range(start_date, end_date, db_name='fuel_raw')
+            deleted_dates = delete_rows_within_range(
+                start_date, end_date, db_name='fuel_raw')
             num_deleted_dates = len(deleted_dates)
             if num_deleted_dates > 0:
-                messages.error(request, f'Successfully Deleted {num_deleted_dates} date{"s" if num_deleted_dates>1 else ""}: {", ".join(deleted_dates)}')
+                messages.error(
+                    request, f'Successfully Deleted {num_deleted_dates} date{"s" if num_deleted_dates>1 else ""}: {", ".join(deleted_dates)}')
             else:
                 messages.error(request, 'No Dates were Deleted')
-
 
     else:
         form = DateRangeForm(initial={'start_date': today, 'end_date': today})
