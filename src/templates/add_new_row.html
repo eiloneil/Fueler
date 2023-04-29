@@ -11,11 +11,14 @@
     </head>
 
     <body>
-        <!-- go back Button -->
-        <a href="{% url 'home' %}">
-            <button class="back_btn">Go to Home Page</button>
-        </a>
-        <br>
+
+    <ul>
+        {% for button in buttons %}
+            <a href="{{ button.url }}" class="back_btn">{{ button.text }}</a>
+            <br>
+        {% endfor %}
+        </ul>
+
         <!-- Delete Row Buton -->
         <a href="{% url switch_action.url %}">
             <button class="back_btn"> {{ switch_action.btn_name }} </button>
@@ -44,7 +47,6 @@
         {% endfor %}
     </div>
     {% endif %}
-
 
 
 

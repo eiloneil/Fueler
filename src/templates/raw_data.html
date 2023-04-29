@@ -29,11 +29,16 @@
     }
     </style>
 
-<!-- go back Button -->
-<a href="{% url 'home' %}">
-  <button class="back_btn">Go to Home Page</button>
-</a>
-    <h1>My historical Fuel data </h1>
+
+<ul>
+  {% for button in buttons %}
+      <a href="{{ button.url }}" class="back_btn">{{ button.text }}</a>
+      <br>
+  {% endfor %}
+  </ul>
+
+
+<h1>My historical Fuel data </h1>
 
     <table>
       <thead>

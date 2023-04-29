@@ -27,6 +27,11 @@ def get_db_from_firebase(db_name='fuel_raw'):
 
 
 def calc_fuel_metrics(input_data, req):
+
+    cost = float(input_data['cost'])
+    amount = float(input_data['amount'])
+    kms = float(input_data['kms'])
+
     # get raw data
     fuel_raw = get_db_from_firebase()
 
@@ -41,12 +46,12 @@ def calc_fuel_metrics(input_data, req):
 
     # calc
     try:
-        diff_kms = int(float(input_data['kms']) - float(prev_kms))
-        diff_days = (date.fromisoformat(
-            input_data['date']) - date.fromisoformat(prev_date)).days
-        price_per_l = float(input_data['cost']) / float(input_data['amount'])
-        kms_per_l = diff_kms / float(input_data['amount'])
-        cost_per_day = float(input_data['cost']) / diff_days
+        diff_kms = int(kms - float(prev_kms))
+        diff_days = int((date.fromisoformat(
+            input_data['date']) - date.fromisoformat(prev_date)).days)
+        price_per_l = cost / amount
+        kms_per_l = diff_kms / amount
+        cost_per_day = cost / diff_days
 
     except Exception as e:
         if isinstance(e, ZeroDivisionError):
@@ -56,6 +61,18 @@ def calc_fuel_metrics(input_data, req):
         else:
             raise e
 
+    # Calc rolling values
+    cols = ['diff',
+            'diff_days',
+            'amount',
+            'price_total']
+    print(list(get_all_values_from_column(cols[0])))
+    total_values = {col:sum(get_all_values_from_column(col)) for col in cols}
+    print(total_values)
+
+    rolling_cost_per_day = (total_values['price_total'] + cost) / (total_values['diff_days'] + diff_days)
+    rolling_kms_per_l = (total_values['diff'] + diff_kms) / (total_values['amount'] + amount)
+
     input_data.update({
         'prev_date': prev_date,
         'prev_kms': prev_kms,
@@ -64,6 +81,8 @@ def calc_fuel_metrics(input_data, req):
         'price_per_l': round(price_per_l, 2),
         'kms_per_l': round(kms_per_l, 2),
         'cost_per_day': cost_per_day,
+        'rolling_cost_per_day': round(rolling_cost_per_day, 2),
+        'rolling_kms_per_l': round(rolling_kms_per_l, 2),
     })
     data = format_input_data_to_firebase(input_data)
     return data
@@ -82,6 +101,8 @@ def format_input_data_to_firebase(data):
         'place': data['place'],
         'price_per_l': data['price_per_l'],
         'price_total': data['cost'],
+        'rolling_cost_per_day': data['rolling_cost_per_day'],
+        'rolling_kms_per_l': data['rolling_kms_per_l'],
     }
 
     final_data = {data['date']: stg_data}
@@ -108,14 +129,15 @@ def get_all_values_from_column(col, db_name='fuel_raw', is_ds=False):
         try:
             #  and forgets to tick the `is_ds` flag
             return [subset[col] for subset in data.values()]
-        except:
+        except Exception as e:
+            print(f"### Failed to use subsets for col={col}\n=========\n{e}\n=========")
             return data.keys()
 
 
 def delete_rows_within_range(s, e, db_name='fuel_raw'):
 
-    start_date = datetime.combine(s, time(0,0))
-    end_date = datetime.combine(e, time(0,0))
+    start_date = datetime.combine(s, time(0, 0))
+    end_date = datetime.combine(e, time(0, 0))
 
     # get raw data
     data = get_db_from_firebase(db_name)
