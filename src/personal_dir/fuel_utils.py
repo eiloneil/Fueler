@@ -59,6 +59,8 @@ def calc_fuel_metrics(input_data, req):
         price_per_l = cost / amount
         kms_per_l = diff_kms / amount
         cost_per_day = cost / diff_days
+        if diff_kms < 1:
+            raise Exception
 
     except Exception as e:
         if isinstance(e, ZeroDivisionError):
