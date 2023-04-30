@@ -10,11 +10,15 @@ from datetime import datetime, date, time
 # import pandas as pd
 import plotly.graph_objs as go
 from plotly.subplots import make_subplots
+from pathlib import Path
+import os
+
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Create a connection to FireBase DB
-
 cred = credentials.Certificate(
-    'Fueler/src/config/efueler-384916-firebase-adminsdk.json')
+    os.path.join(BASE_DIR, 'config/efueler-384916-firebase-adminsdk.json'))
+
 FIREBASE_CONNECTION = firebase_admin.initialize_app(cred, {
     'databaseURL': 'https://efueler-384916-default-rtdb.firebaseio.com/'
 })
@@ -69,8 +73,17 @@ def calc_fuel_metrics(input_data, req):
             'diff_days',
             'amount',
             'price_total']
-    print(list(get_all_values_from_column(cols[0])))
-    total_values = {col:sum(get_all_values_from_column(col)) for col in cols}
+    total_values = {}
+    for col in cols:
+        try:
+            vals = sum(get_all_values_from_column(col, is_ds=False))
+            total_values[col] = vals
+        except Exception as e:
+            print("=====/=/=/==/======")
+            print(f'Is Error a TypeError:{isinstance(e, TypeError)}')
+            print(col)
+            print(get_all_values_from_column(col, is_ds=False))
+            print("=====/=/=/==/======")
     print(total_values)
 
     rolling_cost_per_day = (total_values['price_total'] + cost) / (total_values['diff_days'] + diff_days)
@@ -86,6 +99,8 @@ def calc_fuel_metrics(input_data, req):
         'cost_per_day': cost_per_day,
         'rolling_cost_per_day': round(rolling_cost_per_day, 2),
         'rolling_kms_per_l': round(rolling_kms_per_l, 2),
+        'cost': round(cost, 2),
+        'amount': round(amount, 2),
     })
     data = format_input_data_to_firebase(input_data)
     return data
@@ -93,7 +108,7 @@ def calc_fuel_metrics(input_data, req):
 
 def format_input_data_to_firebase(data):
     stg_data = {
-        'amount': data['amount'],
+        'amount': float(data['amount']),
         'cost_per_day': data['cost_per_day'],
         'diff': data['diff_kms'],
         'diff_days': data['diff_days'],
@@ -103,7 +118,7 @@ def format_input_data_to_firebase(data):
         'last_date': data['prev_date'],
         'place': data['place'],
         'price_per_l': data['price_per_l'],
-        'price_total': data['cost'],
+        'price_total': float(data['cost']),
         'rolling_cost_per_day': data['rolling_cost_per_day'],
         'rolling_kms_per_l': data['rolling_kms_per_l'],
     }
