@@ -7,7 +7,7 @@ from firebase_admin import db
 from .forms import TextInputForm, INPUTS
 import time
 from datetime import datetime, date, time
-import pandas as pd
+# import pandas as pd
 import plotly.graph_objs as go
 from plotly.subplots import make_subplots
 
@@ -177,7 +177,7 @@ def get_plots(df, attr_dict):
 
     annots = []
     for i, sp in enumerate(subplots.keys()):
-        fig.add_trace(go.Scatter(x=df.index, y=df[sp], name=subplots[sp]),
+        fig.add_trace(go.Scatter(x=df['index'], y=df[sp], name=subplots[sp]),
                       row=1, col=i+1)
         annot = dict(text=subplots[sp], x=((i+1)/(num_subplots+1)), y=1.1,
                      font_size=18, showarrow=False, xref='paper', yref='paper', align='center')
