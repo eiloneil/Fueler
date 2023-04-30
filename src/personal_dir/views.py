@@ -8,7 +8,7 @@ from .forms import TextInputForm, INPUTS, DateRangeForm
 import time
 from datetime import datetime
 from .fuel_utils import (calc_fuel_metrics, get_db_from_firebase, delete_rows_within_range, push_to_db, FIREBASE_CONNECTION, get_plots)
-import pandas as pd
+# import pandas as pd
 import plotly.graph_objs as go
 from plotly.subplots import make_subplots
 from django.shortcuts import render
@@ -33,10 +33,21 @@ def home_page_view(req):
 
     # Get Fuel Raw Data
     data = get_db_from_firebase('/fuel_raw')
-    df = pd.DataFrame.from_dict(data, orient='index')
 
-    # daily_plot_div = get_daily_plots(df)
-    # rolling_plot_div = get_rolling_plots(df)
+    # Create an empty dictionary to hold the flattened table data
+    flattened_data = {}
+
+    # Iterate over the sub-dictionaries and flatten the data
+    for row in data.values():
+        for key, value in row.items():
+            if key not in flattened_data:
+                flattened_data[key] = []
+            flattened_data[key].append(value)
+
+    flattened_data['index'] = list(data.keys())
+    df = flattened_data
+
+    # df = pd.DataFrame.from_dict(data, orient='index')
 
     subplot_attr = {
         "daily": {"title": "Daily Stats",
