@@ -14,7 +14,7 @@ from plotly.subplots import make_subplots
 # Create a connection to FireBase DB
 
 cred = credentials.Certificate(
-    '/Users/eiloneil/Desktop/Python/Fueler/fuelerEnv/src/config/efueler-384916-firebase-adminsdk.json')
+    '../src/config/efueler-384916-firebase-adminsdk.json')
 FIREBASE_CONNECTION = firebase_admin.initialize_app(cred, {
     'databaseURL': 'https://efueler-384916-default-rtdb.firebaseio.com/'
 })
