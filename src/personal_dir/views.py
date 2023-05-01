@@ -7,7 +7,15 @@ from firebase_admin import db
 from .forms import TextInputForm, INPUTS, DateRangeForm
 import time
 from datetime import datetime
-from .fuel_utils import (calc_fuel_metrics, get_db_from_firebase, delete_rows_within_range, push_to_db, FIREBASE_CONNECTION, get_plots)
+from .fuel_utils import (
+    calc_fuel_metrics,
+    get_db_from_firebase,
+    delete_rows_within_range,
+    push_to_db,
+    FIREBASE_CONNECTION,
+    get_plots,
+    get_all_values_from_column
+    )
 # import pandas as pd
 import plotly.graph_objs as go
 from plotly.subplots import make_subplots
@@ -126,7 +134,8 @@ def btn_delete_row(request):
                 messages.error(request, 'No Dates were Deleted')
 
     else:
-        form = DateRangeForm(initial={'start_date': today, 'end_date': today})
+        latest_date = max(list(get_all_values_from_column('Date', is_ds=True)))
+        form = DateRangeForm(initial={'start_date': latest_date, 'end_date': latest_date})
     context = {
         'form': form,
         **btn_context,

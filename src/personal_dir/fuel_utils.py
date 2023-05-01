@@ -43,7 +43,7 @@ def calc_fuel_metrics(input_data, req):
     fuel_raw = get_db_from_firebase()
 
     # get prev_date
-    prev_date = max(list(get_all_values_from_column('Date')))
+    prev_date = max(list(get_all_values_from_column('Date', is_ds=True)))
 
     # get last row
     prev_row = (fuel_raw[prev_date])
@@ -60,7 +60,7 @@ def calc_fuel_metrics(input_data, req):
         kms_per_l = diff_kms / amount
         cost_per_day = cost / diff_days
         if diff_kms < 1:
-            raise Exception
+            raise ZeroDivisionError("Too small a Km diff")
 
     except Exception as e:
         if isinstance(e, ZeroDivisionError):
@@ -98,7 +98,7 @@ def calc_fuel_metrics(input_data, req):
         'diff_days': diff_days,
         'price_per_l': round(price_per_l, 2),
         'kms_per_l': round(kms_per_l, 2),
-        'cost_per_day': cost_per_day,
+        'cost_per_day': round(cost_per_day, 2),
         'rolling_cost_per_day': round(rolling_cost_per_day, 2),
         'rolling_kms_per_l': round(rolling_kms_per_l, 2),
         'cost': round(cost, 2),
@@ -163,7 +163,7 @@ def delete_rows_within_range(s, e, db_name='fuel_raw'):
     data = get_db_from_firebase(db_name)
 
     # get all dates
-    all_dates = list(get_all_values_from_column('Date'))
+    all_dates = list(get_all_values_from_column('Date', is_ds=True))
 
     dates_in_range = list(filter(lambda x: start_date <= datetime.strptime(
         x, '%Y-%m-%d') <= end_date, all_dates))
