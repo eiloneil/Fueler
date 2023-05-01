@@ -35,32 +35,19 @@
       <a href="{{ button.url }}" class="back_btn">{{ button.text }}</a>
       <br>
   {% endfor %}
-  </ul>
+</ul>
 
 
-<h1>My historical Fuel data </h1>
+<h1>My Fuel data </h1>
 
-    <table>
-      <thead>
-        <tr>
+<table>
+  <thead>
+    <tr>
+      {% for col in fuel_raw_schema %}
+      <th>{{col.0}}</th>
+      {% endfor %}
 
-
-            <th>Date</th>
-            <th>amount</th>
-            <th>cost_per_day</th>
-            <th>diff</th>
-            <th>diff_days</th>
-            <th>kms_after</th>
-            <th>kms_before</th>
-            <th>kms_per_l</th>
-            <th>last_date</th>
-            <th>place</th>
-            <th>price_per_l</th>
-            <th>price_total</th>
-            <th>rolling_cost_per_day</th>
-            <th>rolling_kms_per_l</th>
-
-        </tr>
+    </tr>
       </thead>
       <tbody>
         <br>
@@ -68,22 +55,24 @@
         {% for ds, row in data.items %}
           <tr>
             <td>{{ ds }}</td>
-            <td>{{ row.amount }}</td>
-            <td>{{ row.cost_per_day }}</td>
-            <td>{{ row.diff }}</td>
-            <td>{{ row.diff_days }}</td>
-            <td>{{ row.kms_after }}</td>
-            <td>{{ row.kms_before }}</td>
-            <td>{{ row.kms_per_l }}</td>
             <td>{{ row.last_date }}</td>
             <td>{{ row.place }}</td>
-            <td>{{ row.price_per_l }}</td>
+            <td>{{ row.amount }}</td>
+            <td>{{ row.kms_before }}</td>
+            <td>{{ row.kms_after }}</td>
+            <td>{{ row.diff }}</td>
+            <td>{{ row.diff_days }}</td>
             <td>{{ row.price_total }}</td>
-            <td>{{ row.rolling_cost_per_day }}</td>
+            <td>{{ row.price_per_l }}</td>
+            <td>{{ row.kms_per_l }}</td>
+            <td>{{ row.cost_per_day }}</td>
             <td>{{ row.rolling_kms_per_l }}</td>
+            <td>{{ row.rolling_cost_per_day }}</td>
           </tr>
         {% endfor %}
       </tbody>
     </table>
+
+    <a href="{% url 'export_csv' %}" class="back_btn">Export as CSV</a>
 
 </html>

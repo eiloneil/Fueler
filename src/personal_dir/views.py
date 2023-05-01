@@ -5,9 +5,20 @@ import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import db
 from .forms import TextInputForm, INPUTS, DateRangeForm
+from .models import FUEL_RAW_SCHEMA
 import time
 from datetime import datetime
-from .fuel_utils import (calc_fuel_metrics, get_db_from_firebase, delete_rows_within_range, push_to_db, FIREBASE_CONNECTION, get_plots)
+from .fuel_utils import (
+    calc_fuel_metrics,
+    get_db_from_firebase,
+    delete_rows_within_range,
+    push_to_db,
+    FIREBASE_CONNECTION,
+    get_plots,
+    get_all_values_from_column
+    )
+import csv
+
 # import pandas as pd
 import plotly.graph_objs as go
 from plotly.subplots import make_subplots
@@ -101,11 +112,29 @@ def btn_show_raw_data(request):
     data = get_db_from_firebase()
 
     # Pass data as context data to the template
-    context = {'data': data}
+    context = {'data': data, 'fuel_raw_schema':FUEL_RAW_SCHEMA}
 
     # Use the data in your Django view or model as needed
     return render(request, 'raw_data.html', context)
 
+
+def export_csv(request):
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="fuel_raw_{today}.csv"'
+
+    response.write(u'\ufeff'.encode('utf8'))
+    writer = csv.writer(response)
+
+    # Get data from the database
+    data = get_db_from_firebase('fuel_raw')
+
+    # Crate Columns names
+    writer.writerow([col[0] for col in FUEL_RAW_SCHEMA])
+
+    for ds, row in data.items():
+        writer.writerow([ds, *[row.get(col[1]) for col in FUEL_RAW_SCHEMA[1:]]])
+
+    return response
 
 def btn_delete_row(request):
 
@@ -126,7 +155,8 @@ def btn_delete_row(request):
                 messages.error(request, 'No Dates were Deleted')
 
     else:
-        form = DateRangeForm(initial={'start_date': today, 'end_date': today})
+        latest_date = max(list(get_all_values_from_column('Date', is_ds=True)))
+        form = DateRangeForm(initial={'start_date': latest_date, 'end_date': latest_date})
     context = {
         'form': form,
         **btn_context,
