@@ -32,6 +32,13 @@ def get_db_from_firebase(db_name='fuel_raw'):
     # Get data from the database
     return ref.get()
 
+# get last row function:
+def get_last_row_from_db(db_name='fuel_raw'):
+    fuel_raw = get_db_from_firebase()
+    prev_date = max(list(get_all_values_from_column('Date', is_ds=True)))
+
+    # get last row
+    return prev_date, fuel_raw[prev_date]
 
 def calc_fuel_metrics(input_data, req):
 
@@ -42,11 +49,9 @@ def calc_fuel_metrics(input_data, req):
     # get raw data
     fuel_raw = get_db_from_firebase()
 
-    # get prev_date
-    prev_date = max(list(get_all_values_from_column('Date', is_ds=True)))
-
     # get last row
-    prev_row = (fuel_raw[prev_date])
+    prev_date, prev_row = get_last_row_from_db()
+
 
     # get last kms
     prev_kms = (prev_row['kms_after'])
@@ -208,3 +213,34 @@ def get_plots(df, attr_dict):
     # Render the plot in a template
     plot_div = fig.to_html(full_html=False)
     return plot_div
+
+# predict the next value based on the last value
+
+def predict_next_value(db='fuel_raw'):
+    # get raw data
+    data = get_db_from_firebase(db)
+
+    # get last row
+    prev_date, prev_row = get_last_row_from_db()
+
+    # calc days since last date
+    last_date = datetime.strptime(prev_date, '%Y-%m-%d')
+    today = datetime.today()
+    diff_days = (today - last_date).days
+
+    # calc new "kms"
+    kms_estimate = float(prev_row['kms_after']) + float((prev_row['diff']) * (diff_days / float(prev_row['diff_days'])))
+
+    # calc new "price_total"
+    price_total_estimate = prev_row['rolling_cost_per_day'] * diff_days
+
+    # calc new "amount"
+    amount_estimate = price_total_estimate / prev_row['price_per_l']
+
+    # place
+    place_estimate = prev_row['place']
+
+    # return all estimates
+    return {
+            'place': place_estimate, 'amount': round(amount_estimate), 'cost': round(price_total_estimate), 'kms': round(kms_estimate)
+        }

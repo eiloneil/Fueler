@@ -15,7 +15,8 @@ from .fuel_utils import (
     push_to_db,
     FIREBASE_CONNECTION,
     get_plots,
-    get_all_values_from_column
+    get_all_values_from_column,
+    predict_next_value,
     )
 import csv
 
@@ -33,9 +34,7 @@ today = datetime.today().strftime('%Y-%m-%d')
 init_text = {'date': today}
 if TEST:
     init_text.update(
-        {
-            'place': 'יילו ירושלים', 'amount': '31.5', 'cost': '280.44', 'kms': '58500',
-        }
+        predict_next_value()
     )
 
 
