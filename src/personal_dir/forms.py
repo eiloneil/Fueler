@@ -11,7 +11,7 @@ INPUTS = [
 class TextInputForm(forms.Form):
     text_boxes = {}
     for i in INPUTS:
-        kwargs = {'label': '', 'max_length': 100, 'widget': forms.TextInput(
+        kwargs = {'label': i, 'max_length': 100, 'widget': forms.TextInput(
             attrs={'placeholder': i, 'class': 'text-input'})}
 
         text_boxes[i] = forms.CharField(**kwargs)
