@@ -66,21 +66,26 @@
 
 
 
-  <h1 class="container">Current Status</h1>
-  <br>
-  <div id="plot" style="color: transparent;">
-
+<h1 class="container">Current Status</h1>
+<br>
+<div id="plot" style="color: lightgreen;">
 
     <!-- Include the Plotly JavaScript libraries -->
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 
     <!-- Render the plot using the plot_div variable passed from the view -->
     <script type="text/javascript">
+    var plot_div_daily = "{{ plot_div.daily|safe }}
+</script>
+{# Splitted in order to avoid the html rendering bug #}
+    <script type="text/javascript">
+    var plot_div_rolling = "{{ plot_div.rolling|safe }}
+{# although this may look like an error, it is not, due to the html rendering bug #}
+</script>
 
-var plot_div_daily = '{{ plot_div.daily|safe }}'
-var plot_div_rolling = '{{ plot_div.rolling|safe }}'
-    </script>
+
 </div>
+
 
 
 </body>

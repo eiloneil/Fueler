@@ -64,12 +64,14 @@ def home_page_view(req):
                   "subplots": {
                       'cost_per_day': 'Price Per Day',
                       'kms_per_l': 'Kms per Liter',
+                      'kms_per_day': 'Kms per Day',
                   }
                   },
         "rolling": {"title": "Rolling Stats",
                     "subplots": {
                         'rolling_cost_per_day': 'Rolling Cost/Day',
                         'rolling_kms_per_l': 'Rolling Kms/Liter',
+                        'rolling_kms_per_day': 'Rolling Kms/Day',
                     }
                     }
     }

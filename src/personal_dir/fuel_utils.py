@@ -25,12 +25,12 @@ FIREBASE_CONNECTION = firebase_admin.initialize_app(cred, {
 
 
 def get_db_from_firebase(db_name='fuel_raw'):
-
     # Get a reference to a specific location in the database
     ref = db.reference(f'/{db_name}')
 
     # Get data from the database
     return ref.get()
+
 
 # get last row function:
 def get_last_row_from_db(db_name='fuel_raw'):
@@ -40,8 +40,8 @@ def get_last_row_from_db(db_name='fuel_raw'):
     # get last row
     return prev_date, fuel_raw[prev_date]
 
-def calc_fuel_metrics(input_data, req):
 
+def calc_fuel_metrics(input_data, req):
     cost = float(input_data['cost'])
     amount = float(input_data['amount'])
     kms = float(input_data['kms'])
@@ -51,7 +51,6 @@ def calc_fuel_metrics(input_data, req):
 
     # get last row
     prev_date, prev_row = get_last_row_from_db()
-
 
     # get last kms
     prev_kms = (prev_row['kms_after'])
@@ -64,6 +63,7 @@ def calc_fuel_metrics(input_data, req):
         price_per_l = cost / amount
         kms_per_l = diff_kms / amount
         cost_per_day = cost / diff_days
+        kms_per_day = diff_kms / diff_days
         if diff_kms < 1:
             raise ZeroDivisionError("Too small a Km diff")
 
@@ -83,6 +83,7 @@ def calc_fuel_metrics(input_data, req):
     total_values = {}
     for col in cols:
         try:
+            # calculate the sum of each column, in order to calculate the rolling values
             vals = sum(get_all_values_from_column(col, is_ds=False))
             total_values[col] = vals
         except Exception as e:
@@ -95,6 +96,7 @@ def calc_fuel_metrics(input_data, req):
 
     rolling_cost_per_day = (total_values['price_total'] + cost) / (total_values['diff_days'] + diff_days)
     rolling_kms_per_l = (total_values['diff'] + diff_kms) / (total_values['amount'] + amount)
+    rolling_kms_per_day = (total_values['diff'] + diff_kms) / (total_values['diff_days'] + diff_days)
 
     input_data.update({
         'prev_date': prev_date,
@@ -103,9 +105,11 @@ def calc_fuel_metrics(input_data, req):
         'diff_days': diff_days,
         'price_per_l': round(price_per_l, 2),
         'kms_per_l': round(kms_per_l, 2),
+        'kms_per_day': round(kms_per_day, 1),
         'cost_per_day': round(cost_per_day, 2),
         'rolling_cost_per_day': round(rolling_cost_per_day, 2),
         'rolling_kms_per_l': round(rolling_kms_per_l, 2),
+        'rolling_kms_per_day': round(rolling_kms_per_day, 1),
         'cost': round(cost, 2),
         'amount': round(amount, 2),
     })
@@ -122,12 +126,14 @@ def format_input_data_to_firebase(data):
         'kms_after': data['kms'],
         'kms_before': data['prev_kms'],
         'kms_per_l': data['kms_per_l'],
+        'kms_per_day': data['kms_per_day'],
         'last_date': data['prev_date'],
         'place': data['place'],
         'price_per_l': data['price_per_l'],
         'price_total': float(data['cost']),
         'rolling_cost_per_day': data['rolling_cost_per_day'],
         'rolling_kms_per_l': data['rolling_kms_per_l'],
+        'rolling_kms_per_day': data['rolling_kms_per_day'],
     }
 
     final_data = {data['date']: stg_data}
@@ -135,7 +141,6 @@ def format_input_data_to_firebase(data):
 
 
 def push_to_db(data, db_name='fuel_raw'):
-
     # Get a reference to a specific location in the database
     ref = db.reference(f'/{db_name}')
 
@@ -160,7 +165,6 @@ def get_all_values_from_column(col, db_name='fuel_raw', is_ds=False):
 
 
 def delete_rows_within_range(s, e, db_name='fuel_raw'):
-
     start_date = datetime.combine(s, time(0, 0))
     end_date = datetime.combine(e, time(0, 0))
 
@@ -185,9 +189,7 @@ def delete_row_by_partition(partition, db_name='fuel_raw'):
     ref.delete()
 
 
-
 def get_plots(df, attr_dict):
-
     ttl = attr_dict['title']
     subplots = attr_dict['subplots']
     num_subplots = len(list(subplots))
@@ -200,8 +202,8 @@ def get_plots(df, attr_dict):
     annots = []
     for i, sp in enumerate(subplots.keys()):
         fig.add_trace(go.Scatter(x=df['index'], y=df[sp], name=subplots[sp]),
-                      row=1, col=i+1)
-        annot = dict(text=subplots[sp], x=((i+1)/(num_subplots+1)), y=1.1,
+                      row=1, col=i + 1)
+        annot = dict(text=subplots[sp], x=(i*1.2 / (num_subplots)) + 0.1, y=1.1,
                      font_size=18, showarrow=False, xref='paper', yref='paper', align='center')
         annots.append(annot)
 
@@ -214,33 +216,27 @@ def get_plots(df, attr_dict):
     plot_div = fig.to_html(full_html=False)
     return plot_div
 
+
 # predict the next value based on the last value
 
 def predict_next_value(db='fuel_raw'):
-    # get raw data
-    data = get_db_from_firebase(db)
-
     # get last row
-    prev_date, prev_row = get_last_row_from_db()
-
-    # calc days since last date
-    last_date = datetime.strptime(prev_date, '%Y-%m-%d')
-    today = datetime.today()
-    diff_days = (today - last_date).days
+    prev_date, prev_row = get_last_row_from_db(db)
 
     # calc new "kms"
-    kms_estimate = float(prev_row['kms_after']) + float((prev_row['diff']) * (diff_days / float(prev_row['diff_days'])))
+    kms_estimate = float(prev_row['kms_after']) + float((prev_row['diff']))
 
     # calc new "price_total"
-    price_total_estimate = prev_row['rolling_cost_per_day'] * diff_days
+    price_total_estimate = prev_row['price_total']
 
     # calc new "amount"
-    amount_estimate = price_total_estimate / prev_row['price_per_l']
+    amount_estimate = prev_row['amount']
 
     # place
     place_estimate = prev_row['place']
 
     # return all estimates
     return {
-            'place': place_estimate, 'amount': round(amount_estimate), 'cost': round(price_total_estimate), 'kms': round(kms_estimate)
-        }
+        'place': place_estimate, 'amount': round(amount_estimate), 'cost': round(price_total_estimate),
+        'kms': round(kms_estimate)
+    }
